@@ -1,0 +1,3 @@
+Modificare is a framework for experimentation designed to enable the replication of empirical studies in software testing. It includes implementations of several test suite reduction and prioritization techniques in the R programming language. The framework also includes R code that can distribute the execution of experiments over a cluster of computers.
+
+![http://img859.imageshack.us/img859/9665/reductionprioritization.png](http://img859.imageshack.us/img859/9665/reductionprioritization.png)
