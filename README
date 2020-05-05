@@ -1,0 +1,372 @@
+######################################################################
+#
+# Modificare - Framework for Replication in Software Testing
+#
+# Original Author: Neil Douglas Elliott
+#
+# Current Maintainer: Jonathan Miller Kauffman (kauffmj@gmail.com)
+#
+######################################################################
+
+
+INTRODUCTION
+
+Modificare is a framework for experimentation designed to enable the
+replication of empirical studies in software testing.  It includes
+implementations of several test suite reduction and prioritization
+techniques in the R programming language.  It also includes
+implementations of several test suite-dependent tasks, or tasks that
+require a test suite.  Some examples are automatic fault localization
+and smoke or daily/nightly build testing.  The framework includes
+R code that can distribute the execution of experiments over a cluster
+of computers in order to support efficient experimentation.
+
+
+DOWNLOAD
+
+The Modificare system can be downloaded from
+
+modificare.googlecode.com
+
+Of course, if you are reading this README file, then you have most
+likely already downloaded this tool.
+
+
+BUILDING MODIFICARE
+
+Since Modificare is written in the R programming language, no
+compilation is required.  However, you should load all of the
+functions provided by this framework into your R environment before
+you complete the remainder of this tutorial.  First, you need to start
+an R environment in the base directory of Modificare.  On most
+systems, this is done by typing
+
+R
+
+on the command line while in the appropriate directory.  After the R
+session starts, type
+
+source("FDP_Start.R")
+
+This will load several functions into your R environment.  Running
+these functions will load other functions that you need in order to
+use this framework.  Some of the key functions that you should run are
+
+zTryReload() - Loads all of the prioritization algorithms.
+
+zLoadFaultExperiment() - Loads the libraries, fitness calculator,
+                         synthetic report generator, and
+                         prioritization algorithms.
+
+zLoadFaultLocalizationExperiment() - Loads the fault localization
+                                     algorithms.
+
+zLoadFaultLibraries() - Loads libraries and the prioritization
+                        algorithms.
+
+zLoadProduceOrderingReductionDataFile() - Loads a function that maps test case
+                                          indices to fully-qualified names.
+
+The remaining functions provided by FDP_Start.R load algorithms
+individually.  In order to run one of these functions; for example,
+in order to load the fault libraries, type
+
+zLoadFaultLibraries()
+
+You should execute the four functions described in this section before
+completing the remainder of this tutorial.
+
+
+COLLECTING COVERAGE INFORMATION
+
+Before performing any of the techniques provided by this framework,
+you need a coverage report that describes which test cases execute
+which program entities.  Although Modificare does not allow you to
+collect this type of information, the Proteja tool does.  Please visit
+
+proteja.googlecode.com
+
+for information on how to download and use this tool.
+
+
+REDUCTION AND PRIORITIZATION
+
+After you have a coverage report, you are ready to perform test suite
+reduction and prioritization.  Modificare provides implementations of
+six algorithms for performing reduction and prioritization: random,
+adaptive random, greedy, hill climbing, genetic, and simulated
+annealing.  In this tutorial we will walk you through a simple example
+with the random prioritization algorithm.  Once you understand this
+example, it should be straightforward to use the remaining algorithms.
+
+This framework contains two variants of the random prioritization
+algorithm: a linear approach and a population-based approach.  For
+the purposes of this example, we will only examine the population-
+based approach.  The population-based random algorithm takes in three
+parameters:
+
+lFM - A coverage matrix that has had its summary row and column
+      removed and its 0's and 1's converted to FALSE's and TRUE's.
+      Information on how to create this matrix will be provided.
+
+cPopSize - The number of random individuals to generate.
+
+Seed - A seed for the random number generator.  This is used to ensure
+       that experiments performed using these algorithms are
+       repeatable.
+
+In order to create a logical matrix, you must first read in the matrix
+and then call the makeLogFM function.  For example, to convert the
+Sudoku line coverage matrix that is provided with this framework, type
+
+x <- makeLogFM(read.table("reqMatrices/StatementCoverageMatrices/
+     Sudoku_1_line_true_Coverage.dat))
+
+This converts the matrix and stores it in an object called 'x'.  For
+population size and seed we will use the values 20 and 100.
+
+Now we can run the population-based random prioritization algorithm
+by typing
+
+Rand_POP(lFM=x, cPopSize=20, Seed=100)
+
+This produces the following output:
+
+$Ord
+ [1] 25 19 14 23 13  5  9 18  2  1  8 16 21 15  3 10  4 11 12 22  7 17
+     6 24 20
+
+$Fit
+[1] 0.7491775
+
+$Pri
+[1] "Rand_POP"
+
+$Conf
+[1] 20
+
+$Seed
+[1] 100
+
+Depending on your version of R, you may receive different values for
+Ord and Fit; however, the basic format of the output should be the
+same.  You can store this output and then reference each return value
+individually; for example, in order to save the ordering, first type
+
+y <- Rand_POP(lFM=x, cPopSize=20, Seed=100)
+
+in order to save the output in an object called 'y'.  Then type
+
+ordering <- y$Ord
+
+in order to save the ordering produced in the object 'ordering'.  The
+test suite can then be run in the new ordering - see the next section
+for information on how to do this.
+
+Please note that if you use the same value for Seed, then you will
+always produce the same ordering.  If you wish to vary your results,
+then be sure to vary the value of Seed.  More information about this
+issue can be found in the EXPERIMENTATION section.
+
+
+RUNNING A REDUCED OR PRIORITIZED TEST SUITE
+
+In the previous section you saved the new ordering for the Sudoku
+test suite in the 'ordering' object.  In order to run the test suite
+in this ordering, you need to save this information in a file.
+First you need to translate the test case numbers into the actual
+names of the test cases.  For the Sudoku example, use
+
+ord <- produceOrderingReductionDataFile(testSuite=ordering,
+       timingsFile="reqMatrices/TimingsFiles/Sudoku_Timing.dat")
+
+This function works because the names of the test cases are stored in 
+the timings file.  Now you can write this information to file using
+
+write.table(ord, file="SK_ordering.dat", row.names=FALSE,
+            col.names=FALSE, quote=FALSE)
+
+Although Modificare cannot use this file in order to run the
+prioritized test suite, the Proteja tool can.  More information on how
+to download and use this tool can be found at
+
+proteja.googlecode.com
+
+
+TEST SUITE-DEPENDENT TASKS
+
+The first test suite-dependent task provided by this framework is
+automatic fault localization.  Modificare contains four fault
+localization techniques: Tarantula, Ochiai, Simple Matching, and
+Jaccard.  In this tutorial we will walk you through an example with
+the Ochiai technique.  Once you understand this example, using the
+other fault localization techniques should be straightforward.
+
+The Ochiai technique takes in three parameters
+
+lFM - A logical matrix as described in the REDUCTION AND
+      PRIORITIZATION section.
+
+liveTests - A logical vector with one logical value for each test
+            case.  If a value is TRUE, consider the test case when
+            locating faults; if it is FALSE, ignore the test case.
+
+failingTests - A logical vector with one logical value for each test
+               case.  If a value is TRUE, then the test case failed;
+               if a value is FALSE, then the test case passed.
+
+We will assume that the logical matrix from the REDUCTION AND
+PRIORITIZATION example is stored in the object 'x', that all tests are
+live, and that only the first test case fails.  We will first create
+the liveTests vector by typing
+
+liveTests <- rep(TRUE,25)
+
+We use the number 25 because Sudoku contains 25 test cases.  Next we
+create the failing Tests vector by typing
+
+failingTests <- rep(FALSE,25)
+failingTests[1] <- TRUE
+
+We can now run the Ochiai technique by typing
+
+runOchiai(lFM=x, liveTests=liveTests, failingTests=failingTests)
+
+This produces the following output
+
+$Suspiciousness
+  [1]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+  [7]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [13]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [19]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [25]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [31]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [37]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [43]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [49]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [55]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [61]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [67]  0.0000000  0.0000000  0.0000000  0.0000000 -1.0000000  0.0000000
+ [73]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [79]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [85]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [91] -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000  0.0000000
+ [97]  0.0000000  0.2000000  0.2000000  0.2000000  0.0000000  0.0000000
+[103]  0.0000000  0.0000000  0.2000000 -1.0000000 -1.0000000 -1.0000000
+[109] -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000  0.0000000
+[115]  0.0000000  0.0000000  0.0000000  0.0000000 -1.0000000 -1.0000000
+[121] -1.0000000 -1.0000000 -1.0000000  0.0000000  0.0000000  0.0000000
+[127]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[133]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[139]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[145]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[151]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[157]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[163]  0.0000000  0.0000000  0.0000000  0.0000000 -1.0000000  0.0000000
+[169] -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000
+[175]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[181]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[187]  0.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000
+[193] -1.0000000 -1.0000000 -1.0000000  0.0000000  0.0000000  0.0000000
+[199]  0.0000000  0.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000
+[205] -1.0000000 -1.0000000 -1.0000000  0.0000000  0.0000000  0.0000000
+[211]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[217] -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000 -1.0000000
+[223]  0.2000000  0.7071068  0.0000000  0.0000000  0.0000000 -1.0000000
+[229]  0.2000000  0.2000000  0.0000000
+
+$Confidence
+NULL
+
+$Rank
+  [1] 224  98  99 100 105 223 229 230   1   2   3   4   5   6   7   8   9  10
+ [19]  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28
+ [37]  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46
+ [55]  47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63  64
+ [73]  65  66  67  68  69  70  72  73  74  75  76  77  78  79  80  81  82  83
+ [91]  84  85  86  87  88  89  90  96  97 101 102 103 104 114 115 116 117 118
+[109] 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141
+[127] 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+[145] 160 161 162 163 164 165 166 168 175 176 177 178 179 180 181 182 183 184
+[163] 185 186 187 196 197 198 199 200 208 209 210 211 212 213 214 215 216 225
+[181] 226 227 231  71  91  92  93  94  95 106 107 108 109 110 111 112 113 119
+[199] 120 121 122 123 167 169 170 171 172 173 174 188 189 190 191 192 193 194
+[217] 195 201 202 203 204 205 206 207 217 218 219 220 221 222 228
+
+Confidence is not used for Ochiai, Simple Matching, or Jaccard, but a
+vector will appear under this label for the Tarantula technique.
+
+The Rank vector is the one of primary interest, since the developer
+would use this to determine the order in which he or she should
+examine the source code statements.  In order to store it, first type
+
+local <- runOchiai(lFM=x, liveTests=liveTests,
+                   failingTests=failingTests)
+
+in order to store the fault localization output.  Then type
+
+write.table(local$Rank, file="SK_Ochiai_Rank.dat", row.names=FALSE,
+            col.names=FALSE, quote=FALSE)
+
+in order to save the rank in the file "SK_Ochiai_Rank.dat".
+
+More information about smoke and daily/nightly build testing will be
+provided at a later date.
+
+
+EXPERIMENTATION
+
+Modificare provides functions that allow you to perform experiments
+with the reduction and prioritization algorithms.  Each algorithm also
+contains a function that allows you to run it for a number of trials
+in a variety of configurations.  For the random algorithm, this
+function is called "Rand_Multi_Rep" and it takes in six parameters:
+
+fFM - The file name of a coverage matrix.
+
+cPopSize - A list of population sizes.
+
+Rand - A list of random algorithm variants.
+
+RandSeed - A seed for the random number generator.
+
+Trials - The number of trials in which to run each configuration.
+
+Par - Whether or not to use a parallel back end if it is available.
+
+Here is an example invocation
+
+Rand_Multi_Rep(fFM="reqMatrices/StatementCoverageMatrices/
+               Sudoku_1_line_true_Coverage.dat",cPopSize=c(10,20,30),
+               Rand=c("Rand_LIN_real","Rand_POP_real"),RandSeed=100,
+               Trials=10,Par=FALSE)
+
+In order to avoid setting the random seed in more than one location,
+there are two versions of each prioritization and reduction algorithm.
+When running an algorithm for only one iteration, use the normal name.
+When running experiments with a number of trials, use the "real"
+version.
+
+The output from this command is an R data frame that contains
+information about the efficiency and and effectiveness of the
+technique for each trial and configuration.  Information on how to
+statistically analyze and visualize the results produced by this data
+frame are provided in the next section.
+
+When functions are available for performing fault localization and
+smoke and daily/nightly build testing experiments, they will be
+discussed here.
+
+
+VISUALIZATION AND STATISTICAL ANALYSIS
+
+More information about visualizing and statistically analyzing the
+results of experimentation will be provided at a later date.
+
+
+QUESTIONS OR COMMENTS?
+
+If you have questions or comments about Modificare, including bug
+reports, please contact Jonathan Miller Kauffman (kauffmj@gmail.com).
+If you are submitting a bug report, please be sure to include enough
+information to reproduce the problem.
