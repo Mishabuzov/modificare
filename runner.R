@@ -84,11 +84,12 @@ run_HC_SA <- function () {
   save_ordering(y, "HC_SA_ordering.txt")
 }
 
-run_HC_RA <- function () {
-  print("Running HC_RA algorithm.")
-  y <- HC_RA(x, NG="NG_LS", Seed=100)
-  save_ordering(y, "HC_RA_ordering.txt")
-}
+# Error in HC_RA_real(lFM, NG, Ord, Seed) (FDP_HC.R#352): object 'ItLimit' not found
+# run_HC_RA <- function () {
+#   print("Running HC_RA algorithm.")
+#   y <- HC_RA(x, NG="NG_LS", Seed=100)
+#   save_ordering(y, "HC_RA_ordering.txt")
+# }
 
 run_SANN <- function () {
   print("Running SANN algorithm.")
@@ -104,7 +105,6 @@ for (PROJECT_NAME in PROJECT_NAMES) {
   COV_MATRIX_PATH <- sprintf("reqMatrices/D4J_method_matrices/%s_method_coverage_matrix.txt", PROJECT_NAME)
   TIMING_FILE <- sprintf("reqMatrices/TimingsFiles/%s_id_name_mapping.txt", PROJECT_NAME)
   x <- makeLogFM(read.table(COV_MATRIX_PATH))
-  run_HC_RA()
   run_HC_FA_n_times(n)
   run_greedy_n_times(n)
   # run_random_n_times(100)
