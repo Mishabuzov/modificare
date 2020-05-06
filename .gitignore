@@ -2,6 +2,7 @@
 old_results/
 reqMatrices/
 .idea/
+.RDataFiles/
 
 # exclude all files ends with .iml
 **.iml
