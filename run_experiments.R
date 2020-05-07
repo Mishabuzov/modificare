@@ -3,7 +3,6 @@
 # Created by: misha
 # Created on: 15.03.2020
 
-# PROJECT_NAME <- "time"
 
 init <- function () {
   source("FDP_Start.R")
@@ -85,7 +84,7 @@ run_SANN_n_times <- function (times) {
   }
 }
 
-PROJECT_NAMES <- c("closure")
+PROJECT_NAMES <- c("chart", "lang", "time", "math", "closure")
 n <- 5
 init()
 for (PROJECT_NAME in PROJECT_NAMES) {
@@ -93,5 +92,5 @@ for (PROJECT_NAME in PROJECT_NAMES) {
   COV_MATRIX_PATH <- sprintf("reqMatrices/D4J_method_matrices/%s_method_coverage_matrix.txt", PROJECT_NAME)
   TIMING_FILE <- sprintf("reqMatrices/TimingsFiles/%s_id_name_mapping.txt", PROJECT_NAME)
   x <- makeLogFM(read.table(COV_MATRIX_PATH))
-  run_ART_n_times(n)
+  run_HC_SA_n_times(n)
 }
