@@ -21,8 +21,8 @@ save_ordering <- function (y, algoname) {
               col.names=FALSE, quote=FALSE)
 }
 
-run_random_n_times <- function (time=10) {
-  for (seed in 1:time) {
+run_random_n_times <- function (times=10) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("testing random TCP with seed:", seed))
     y <- Rand_POP(lFM=x, cPopSize=20 + seed, Seed=seed)
     save_ordering(y, sprintf("random_ordering_%s.txt", seed))
@@ -30,7 +30,7 @@ run_random_n_times <- function (time=10) {
 }
 
 run_greedy_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing greedy algorithm with seed:", seed))
     y <- GRD(COV_MATRIX_PATH, TIMING_FILE, seed=seed)
     save_ordering(y, sprintf("greedy_ordering_%s.txt", seed))
@@ -38,7 +38,7 @@ run_greedy_n_times <- function (times) {
 }
 
 run_GA_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing GA with seed:", seed))
     y <- GA(x, Seed=seed)
     save_ordering(y, sprintf("genetic_ordering_%s.txt", seed))
@@ -46,7 +46,7 @@ run_GA_n_times <- function (times) {
 }
 
 run_HC_FA_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing HC_FA with seed:", seed))
     y <- HC_FA(x, Seed=seed)
     save_ordering(y, sprintf("HC_FA_ordering_%s.txt", seed))
@@ -54,7 +54,7 @@ run_HC_FA_n_times <- function (times) {
 }
 
 run_ART_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing ART with seed:", seed))
     y <- ART(read.table(COV_MATRIX_PATH), "ManhattanDistance", "avg", seed=seed)
     save_ordering(y, sprintf("ART_man_avg_ordering_%s.txt", seed))
@@ -62,7 +62,7 @@ run_ART_n_times <- function (times) {
 }
 
 run_HC_SA_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing HC_SA with seed:", seed))
     y <- HC_SA(x, Seed=seed)
     save_ordering(y, sprintf("HC_SA_ordering_%s.txt", seed))
@@ -77,7 +77,7 @@ run_HC_SA_n_times <- function (times) {
 # }
 
 run_SANN_n_times <- function (times) {
-  for (seed in 1:times) {
+  for (seed in init_seed:(init_seed + times - 1)) {
     print(paste("Testing SANN with seed:", seed))
     y <- SANN(x, Seed=seed)
     save_ordering(y, sprintf("SANN_ordering_%s.txt", seed))
@@ -85,12 +85,17 @@ run_SANN_n_times <- function (times) {
 }
 
 PROJECT_NAMES <- c("chart", "lang", "time", "math", "closure")
-n <- 5
+n <- 10
+init_seed <- 80
 init()
 for (PROJECT_NAME in PROJECT_NAMES) {
   print(sprintf("Running project %s", PROJECT_NAME))
   COV_MATRIX_PATH <- sprintf("reqMatrices/D4J_method_matrices/%s_method_coverage_matrix.txt", PROJECT_NAME)
   TIMING_FILE <- sprintf("reqMatrices/TimingsFiles/%s_id_name_mapping.txt", PROJECT_NAME)
   x <- makeLogFM(read.table(COV_MATRIX_PATH))
+  run_GA_n_times(n)
   run_HC_SA_n_times(n)
+  run_ART_n_times(n)
+  run_HC_FA_n_times(n)
+  run_SANN_n_times(n)
 }
