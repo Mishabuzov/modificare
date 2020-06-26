@@ -1,6 +1,6 @@
 # Exclude following dirs:
 old_results/
-reqMatrices/
+#reqMatrices/
 .idea/
 .RDataFiles/
 
